@@ -2,23 +2,22 @@ apply plugin: 'com.android.library'
 
 android {
 
-    try{
+    try {
         compileSdkVersion rootProject.ext.compileSdkVersion
-    }catch(Exception e){
-        compileSdkVersion 29
+    } catch (Exception e) {
+        compileSdkVersion 35
     }
+    namespace 'com.sensorsdata.analytics'
     defaultConfig {
-        minSdkVersion 9
-        try{
+        minSdkVersion 24
+        try {
             targetSdkVersion rootProject.ext.targetSdkVersion
-        }catch(Exception e){
-            targetSdkVersion 29
+        } catch (Exception e) {
+            targetSdkVersion 35
         }
         versionCode 1
         versionName "1.0"
         consumerProguardFiles 'proguard-rules.pro'
-        //testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
-
     }
 
     buildTypes {
@@ -27,18 +26,18 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
-    //implementation 'com.android.support:appcompat-v7:28.0.0'
-    //testImplementation 'junit:junit:4.12'
-    //androidTestImplementation 'com.android.support.test:runner:1.0.2'
-    //androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
-    compileOnly 'com.facebook.react:react-native:+'
+    // RN 0.88 起 react-native 坐标停发,改用 react-android
+    compileOnly 'com.facebook.react:react-android'
 
-    //添加 Sensors Analytics SDK 依赖
-    compileOnly 'com.sensorsdata.analytics.android:SensorsAnalyticsSDK:6.5.1'
+    // 神策 Android SDK 6.5.1 module_core 源码已并入 src/main/java(原 compileOnly aar 已移除)
+    // fork 扩展:AnalyticsMessages.sendHttpRequest 改为 SLS WebTracking 直传
+
+    testImplementation 'junit:junit:4.13.2'
+    // 单测里用真实 org.json 替换 android.jar 的 stub 实现
+    testImplementation 'org.json:json:20231013'
 }

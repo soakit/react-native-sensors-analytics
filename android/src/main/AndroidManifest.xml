@@ -1,2 +1,23 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.sensorsdata.analytics" />
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- send data -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- network state -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+
+    <application>
+        <provider
+            android:name="com.sensorsdata.analytics.android.sdk.data.SensorsDataContentProvider"
+            android:authorities="${applicationId}.SensorsDataContentProvider"
+            android:enabled="true"
+            android:exported="false" />
+
+        <meta-data
+            android:name="com.sensorsdata.analytics.android.MainProcessName"
+            android:value="${applicationId}" />
+        <meta-data
+            android:name="com.sensorsdata.analytics.android.version"
+            android:value="6.5.1" />
+    </application>
+</manifest>
