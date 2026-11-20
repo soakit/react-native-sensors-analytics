@@ -1,9 +1,0 @@
-com.sensorsdata.analytics.sensorsdata-analytics-react-native-pngs-0 /Users/erkoliu/Documents/github/react-native-sensors-analytics/android/build/generated/res/pngs/debug
-com.sensorsdata.analytics.sensorsdata-analytics-react-native-updated_navigation_xml-1 /Users/erkoliu/Documents/github/react-native-sensors-analytics/android/build/generated/updated_navigation_xml/debug
-com.sensorsdata.analytics.sensorsdata-analytics-react-native-mergeDebugResources-2 /Users/erkoliu/Documents/github/react-native-sensors-analytics/android/build/intermediates/incremental/debug/mergeDebugResources/merged.dir
-com.sensorsdata.analytics.sensorsdata-analytics-react-native-mergeDebugResources-3 /Users/erkoliu/Documents/github/react-native-sensors-analytics/android/build/intermediates/incremental/debug/mergeDebugResources/stripped.dir
-com.sensorsdata.analytics.sensorsdata-analytics-react-native-debug-4 /Users/erkoliu/Documents/github/react-native-sensors-analytics/android/build/intermediates/merged_res/debug/mergeDebugResources
-com.sensorsdata.analytics.sensorsdata-analytics-react-native-debug-5 /Users/erkoliu/Documents/github/react-native-sensors-analytics/android/build/intermediates/packaged_res/debug/packageDebugResources
-com.sensorsdata.analytics.sensorsdata-analytics-react-native-debug-6 /Users/erkoliu/Documents/github/react-native-sensors-analytics/android/src/debug/res
-com.sensorsdata.analytics.sensorsdata-analytics-react-native-main-7 /Users/erkoliu/Documents/github/react-native-sensors-analytics/android/src/main/res
-gradleHome-0 /Users/erkoliu/.gradle

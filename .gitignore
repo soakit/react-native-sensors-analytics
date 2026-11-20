@@ -66,3 +66,5 @@ profile
 
 # AppCode
 .idea
+# Android build outputs
+build/
