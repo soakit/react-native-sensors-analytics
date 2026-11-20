@@ -274,7 +274,7 @@ public class AnalyticsMessages {
         }
     }
 
-    private void sendHttpRequest(String path, String data, String gzip, String rawMessage, boolean isRedirects) throws ConnectErrorException, ResponseErrorException {
+    private void sendHttpRequest(String path, String data, String gzip, String rawMessage, boolean isRedirects) throws ConnectErrorException, ResponseErrorException, InvalidDataException {
         // fork 扩展:数据直传阿里云 SLS(dinghuo123/frontend_77ircloud),替换原神策协议上报。
         // path/gzip/isRedirects 为旧协议参数,直传下不再使用(data 即待上报的明文事件数组)。
         HttpURLConnection connection = null;

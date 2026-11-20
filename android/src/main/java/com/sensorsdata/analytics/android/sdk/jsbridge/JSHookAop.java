@@ -93,8 +93,8 @@ public class JSHookAop {
     }
 
     private static void setupWebView(View webView) {
-        if (webView != null && webView.getTag(com.sensorsdata.analytics.android.sdk.R.id.sensors_analytics_tag_view_webview) == null) {
-            webView.setTag(com.sensorsdata.analytics.android.sdk.R.id.sensors_analytics_tag_view_webview, new Object());
+        if (webView != null && webView.getTag(com.sensorsdata.analytics.R.id.sensors_analytics_tag_view_webview) == null) {
+            webView.setTag(com.sensorsdata.analytics.R.id.sensors_analytics_tag_view_webview, new Object());
             H5Util.addJavascriptInterface(webView, new AppWebViewInterface(SensorsDataAPI.sharedInstance().getSAContextManager().getContext(), null, false, webView), "SensorsData_APP_New_H5_Bridge");
         }
     }
