@@ -1027,6 +1027,7 @@ public class RNSensorsAnalyticsModule extends ReactContextBaseJavaModule {
                         .setAutoTrackEventType(configJson.optInt("auto_track", 0))
                         .setFlushBulkSize(configJson.optInt("flush_bulksize", 100))
                         .setFlushInterval(configJson.optInt("flush_interval", 15000));
+                saConfigOptions.setSlsUploadEnabled(configJson.optBoolean("upload_enabled", true));
                 if (VersionUtils.checkSAVersion("6.4.3")) {
                     final JSONObject globalProperties = configJson.optJSONObject("global_properties");
                     saConfigOptions.registerPropertyPlugin(new RNGlobalPropertyPlugin(globalProperties));

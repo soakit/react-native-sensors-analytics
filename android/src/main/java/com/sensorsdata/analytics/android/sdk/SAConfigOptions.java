@@ -46,6 +46,11 @@ public final class SAConfigOptions extends AbstractSAConfigOptions implements Cl
     boolean mInvokeLog;
 
     /**
+     * SLS 直传开关(fork 扩展):test/dev 关闭后 flush 阶段直接丢弃事件,不产生网络上报。
+     */
+    boolean mSlsUploadEnabled = true;
+
+    /**
      * 私有构造函数
      */
     private SAConfigOptions() {
@@ -361,6 +366,26 @@ public final class SAConfigOptions extends AbstractSAConfigOptions implements Cl
     public SAConfigOptions disableSDK(boolean disableSDK) {
         this.isDisableSDK = disableSDK;
         return this;
+    }
+
+    /**
+     * 是否开启 SLS 直传(fork 扩展,默认 true)。关闭后 flush 阶段直接清理队列,数据不落 SLS。
+     *
+     * @param enabled 是否开启
+     * @return SAConfigOptions
+     */
+    public SAConfigOptions setSlsUploadEnabled(boolean enabled) {
+        this.mSlsUploadEnabled = enabled;
+        return this;
+    }
+
+    /**
+     * 查询 SLS 直传开关(fork 扩展)。
+     *
+     * @return 是否开启
+     */
+    public boolean isSlsUploadEnabled() {
+        return mSlsUploadEnabled;
     }
 
     /**

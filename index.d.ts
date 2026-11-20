@@ -4,30 +4,31 @@ declare type PropertiesType = string | number | boolean | Array<string>;
 declare type PropertiesObjectType = { [key: string]: PropertiesType }
 
 declare type Config = {
-  server_url: string,//数据接收地址，默认 ""
-  show_log: boolean,//是否显示日志,默认 false
-  ios: {//iOS 端特有配置
+  server_url?: string,//数据接收地址(fork:上报已被 SLS 直传替换,此处仅占位,默认 "")
+  show_log?: boolean,//是否显示日志,默认 false
+  ios?: {//iOS 端特有配置
     max_cache_size?: number //最大缓存条数，默认 10000
   },
-  harmony: {// HarmonyOS 端特有配置
+  harmony?: {// HarmonyOS 端特有配置
     max_cache_size?: number //最大缓存条数，默认 10000
   },
   global_properties?: PropertiesObjectType,// 全局属性
-  auto_track: SAAutoTrackType,// 全埋点开关，默认不开启，HarmonyOS 暂不支持此接口
-  javascript_bridge: boolean,//H5 打通开关，默认 false
-  flush_interval: number,//数据上报间隔，默认 15*1000 毫秒
-  flush_bulksize: number,//数据缓存上报最大条数，默认 100 条
-  encrypt: boolean,//默认 false
-  android: {//Android 端特有配置
+  auto_track?: SAAutoTrackType,// 全埋点开关，默认不开启；RN 0.77+ 宿主不可用(fork 宿主 RN 0.88)
+  javascript_bridge?: boolean,//H5 打通开关，默认 false
+  upload_enabled?: boolean,// fork 扩展:SLS 直传开关,默认 true;test/dev 环境传 false(flush 阶段直接丢弃)
+  flush_interval?: number,//数据上报间隔，默认 15*1000 毫秒
+  flush_bulksize?: number,//数据缓存上报最大条数，默认 100 条
+  encrypt?: boolean,//默认 false
+  android?: {//Android 端特有配置
     max_cache_size?: number,//最大缓存数，默认 32*1024*1024
     jellybean?: boolean, //支持 Android 16 以下版本打通，默认 false
     sub_process_flush?: boolean //支持子进程上报，默认 false
   },
-  visualized: {
+  visualized?: {
     auto_track?: boolean,// 可视化开关，默认 false
     properties?: boolean // 可视化自定义属性，默认 false
   },
-  heat_map: boolean     // 点击图开关，默认 false
+  heat_map?: boolean     // 点击图开关，默认 false
 }
 
 declare enum SAAutoTrackType {

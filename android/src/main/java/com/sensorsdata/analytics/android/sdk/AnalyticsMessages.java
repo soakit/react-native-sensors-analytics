@@ -20,7 +20,6 @@ package com.sensorsdata.analytics.android.sdk;
 import static com.sensorsdata.analytics.android.sdk.util.Base64Coder.CHARSET_UTF8;
 
 import android.content.Context;
-import android.net.Uri;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
@@ -34,9 +33,10 @@ import com.sensorsdata.analytics.android.sdk.exceptions.ConnectErrorException;
 import com.sensorsdata.analytics.android.sdk.exceptions.InvalidDataException;
 import com.sensorsdata.analytics.android.sdk.exceptions.ResponseErrorException;
 import com.sensorsdata.analytics.android.sdk.internal.beans.InternalConfigOptions;
+import com.sensorsdata.analytics.android.sdk.sls.SlsConfig;
+import com.sensorsdata.analytics.android.sdk.sls.SlsPayload;
 import com.sensorsdata.analytics.android.sdk.util.AppStateTools;
 import com.sensorsdata.analytics.android.sdk.util.Base64Coder;
-import com.sensorsdata.analytics.android.sdk.util.JSONUtils;
 import com.sensorsdata.analytics.android.sdk.util.NetworkUtils;
 import com.sensorsdata.analytics.android.sdk.util.TimeUtils;
 
@@ -52,7 +52,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.zip.GZIPOutputStream;
 
-import javax.net.ssl.HttpsURLConnection;
 
 
 /**
@@ -229,14 +228,16 @@ public class AnalyticsMessages {
             final String gzip = eventsData[2];
             String errorMessage = null;
 
-            try {
-                String data = rawMessage;
-                if (DbParams.GZIP_DATA_EVENT.equals(gzip)) {
-                    data = encodeData(rawMessage);
-                }
+            SAConfigOptions flushConfigOptions = mInternalConfigs.saConfigOptions;
+            if (flushConfigOptions == null || !flushConfigOptions.isSlsUploadEnabled()) {
+                // SLS 直传关闭(test/dev):丢弃本批事件,继续清空队列
+                count = mDbAdapter.cleanupEvents(lastId);
+                continue;
+            }
 
-                if (!TextUtils.isEmpty(data)) {
-                    sendHttpRequest(mSensorsDataAPI.getServerUrl(), data, gzip, rawMessage, false);
+            try {
+                if (!TextUtils.isEmpty(rawMessage)) {
+                    sendHttpRequest(mSensorsDataAPI.getServerUrl(), rawMessage, gzip, rawMessage, false);
                 }
             } catch (ConnectErrorException e) {
                 deleteEvents = false;
@@ -274,100 +275,56 @@ public class AnalyticsMessages {
     }
 
     private void sendHttpRequest(String path, String data, String gzip, String rawMessage, boolean isRedirects) throws ConnectErrorException, ResponseErrorException {
+        // fork 扩展:数据直传阿里云 SLS(dinghuo123/frontend_77ircloud),替换原神策协议上报。
+        // path/gzip/isRedirects 为旧协议参数,直传下不再使用(data 即待上报的明文事件数组)。
         HttpURLConnection connection = null;
         InputStream in = null;
-        OutputStream out = null;
-        BufferedOutputStream bout = null;
         try {
-            final URL url = new URL(path);
+            String payload = SlsPayload.build(data);
+            if (TextUtils.isEmpty(payload)) {
+                throw new InvalidDataException("sls payload build failed");
+            }
+            byte[] bodyBytes = payload.getBytes(CHARSET_UTF8);
+            if (bodyBytes.length > 3 * 1024 * 1024) {
+                // 超过 SLS WebTracking 单请求上限:丢弃本批,避免永久重试堵死队列
+                throw new InvalidDataException("sls payload too large: " + bodyBytes.length);
+            }
+            URL url = new URL(SlsConfig.trackUrl());
             connection = (HttpURLConnection) url.openConnection();
-            if (connection == null) {
-                SALog.i(TAG, String.format("can not connect %s, it shouldn't happen", url));
-                return;
-            }
-            SAConfigOptions configOptions = SensorsDataAPI.getConfigOptions();
-            if (configOptions != null && configOptions.mSSLSocketFactory != null
-                    && connection instanceof HttpsURLConnection) {
-                ((HttpsURLConnection) connection).setSSLSocketFactory(configOptions.mSSLSocketFactory);
-
-            }
             connection.setInstanceFollowRedirects(false);
-            if (mSensorsDataAPI.getDebugMode() == SensorsDataAPI.DebugMode.DEBUG_ONLY) {
-                connection.addRequestProperty("Dry-Run", "true");
-            }
-
-            String cookie = mSensorsDataAPI.getCookie(false);
-            if (!TextUtils.isEmpty(cookie)) {
-                connection.setRequestProperty("Cookie", cookie);
-            }
-
-            Uri.Builder builder = new Uri.Builder();
-            //先校验crc
-            if (!TextUtils.isEmpty(data)) {
-                builder.appendQueryParameter("crc", String.valueOf(data.hashCode()));
-            }
-
-            builder.appendQueryParameter("gzip", gzip);
-            builder.appendQueryParameter("data_list", data);
-
-            String query = builder.build().getEncodedQuery();
-            if (TextUtils.isEmpty(query)) {
-                return;
-            }
-
-            connection.setFixedLengthStreamingMode(query.getBytes(CHARSET_UTF8).length);
+            connection.setFixedLengthStreamingMode(bodyBytes.length);
             connection.setDoOutput(true);
             connection.setRequestMethod("POST");
-            //设置连接超时时间
             connection.setConnectTimeout(30 * 1000);
-            //设置读取超时时间
             connection.setReadTimeout(30 * 1000);
-            out = connection.getOutputStream();
-            bout = new BufferedOutputStream(out);
-            bout.write(query.getBytes(CHARSET_UTF8));
-            bout.flush();
+            connection.setRequestProperty("Content-Type", "application/json");
+            connection.setRequestProperty("x-log-apiversion", "0.6.0");
+            connection.setRequestProperty("x-log-bodyrawsize", String.valueOf(bodyBytes.length));
+            OutputStream out = connection.getOutputStream();
+            out.write(bodyBytes);
+            out.flush();
+            out.close();
 
             int responseCode = connection.getResponseCode();
-            SALog.i(TAG, "responseCode: " + responseCode);
-            if (!isRedirects && NetworkUtils.needRedirects(responseCode)) {
-                String location = NetworkUtils.getLocation(connection, path);
-                if (!TextUtils.isEmpty(location)) {
-                    closeStream(bout, out, null, connection);
-                    sendHttpRequest(location, data, gzip, rawMessage, true);
-                    return;
-                }
-            }
+            SALog.i(TAG, "sls responseCode: " + responseCode);
             try {
                 in = connection.getInputStream();
             } catch (FileNotFoundException e) {
                 in = connection.getErrorStream();
             }
-            byte[] responseBody = slurp(in);
+            slurp(in);
             in.close();
             in = null;
 
-            String response = new String(responseBody, CHARSET_UTF8);
-            if (SALog.isLogEnabled()) {
-                String jsonMessage = JSONUtils.formatJson(rawMessage);
-                // 状态码 200 - 300 间都认为正确
-                if (responseCode >= HttpURLConnection.HTTP_OK &&
-                        responseCode < HttpURLConnection.HTTP_MULT_CHOICE) {
-                    SALog.i(TAG, "valid message: \n" + jsonMessage);
-                } else {
-                    SALog.i(TAG, "invalid message: \n" + jsonMessage);
-                    SALog.i(TAG, String.format(TimeUtils.SDK_LOCALE, "ret_code: %d", responseCode));
-                    SALog.i(TAG, String.format(TimeUtils.SDK_LOCALE, "ret_content: %s", response));
-                }
-            }
             if (responseCode < HttpURLConnection.HTTP_OK || responseCode >= HttpURLConnection.HTTP_MULT_CHOICE) {
-                // 校验错误
-                throw new ResponseErrorException(String.format("flush failure with response '%s', the response code is '%d'",
-                        response, responseCode), responseCode);
+                // 404/403/5xx 交由外层 isDeleteEventsByCode 决定留库重试,语义与原实现一致
+                throw new ResponseErrorException(String.format("sls flush failure, the response code is '%d'",
+                        responseCode), responseCode);
             }
         } catch (IOException e) {
             throw new ConnectErrorException(e);
         } finally {
-            closeStream(bout, out, in, connection);
+            closeStream(null, null, in, connection);
         }
     }
 
