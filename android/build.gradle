@@ -26,6 +26,11 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    testOptions {
+        // 单测直接跑 JVM:SALog 等 android.util.Log 调用返回默认值而非抛 "not mocked"
+        unitTests.returnDefaultValues = true
+    }
 }
 
 dependencies {
