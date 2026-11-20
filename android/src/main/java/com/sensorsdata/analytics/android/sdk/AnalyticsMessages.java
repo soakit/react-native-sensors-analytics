@@ -174,10 +174,8 @@ public class AnalyticsMessages {
                 return;
             }
 
-            if (TextUtils.isEmpty(mSensorsDataAPI.getServerUrl())) {
-                SALog.i(TAG, "Server url is null or empty.");
-                return;
-            }
+            // fork 扩展:上报地址固定为 SLS(SlsConfig),不再依赖神策 serverUrl,
+            // 故不校验 mSensorsDataAPI.getServerUrl() 是否为空。
 
             //无网络
             if (!NetworkUtils.isNetworkAvailable(mContext)) {
